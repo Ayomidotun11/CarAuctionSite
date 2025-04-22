@@ -60,8 +60,6 @@ public class AuctionsController : ControllerBase
 
         auction.Seller = User.Identity.Name;
 
-        
-
         _context.Auctions.Add(auction);
 
         var result = await _context.SaveChangesAsync() > 0;
