@@ -16,9 +16,9 @@ builder.Services.AddDbContext<AuctionDbContext>(opt =>
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-builder.Services.AddMassTransit(x => {
-
-     x.AddEntityFrameworkOutbox<AuctionDbContext>(o =>
+builder.Services.AddMassTransit(x => 
+{
+    x.AddEntityFrameworkOutbox<AuctionDbContext>(o =>
     {
         o.QueryDelay = TimeSpan.FromSeconds(10);
 
@@ -26,14 +26,20 @@ builder.Services.AddMassTransit(x => {
         o.UseBusOutbox();
     });
 
-     x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
+    x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("auction", false));
-    
-    x.UsingRabbitMq((context, cfg) =>
+
+    x.UsingRabbitMq((context, cfg) => 
     {
-        cfg.ConfigureEndpoints(context);});
-    
+    cfg.Host(builder.Configuration["RabbitMq:Host"], "/", host =>
+    {
+        host.Username(builder.Configuration.GetValue("RabbitMq:Username", "guest"));
+        host.Password(builder.Configuration.GetValue("RabbitMq:Password", "guest"));
+    });
+
+        cfg.ConfigureEndpoints(context);
+    });
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
