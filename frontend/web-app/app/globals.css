@@ -3,3 +3,7 @@
 @source "../.flowbite-react/class-list.json";
 
 @config "../tailwind.config.mjs";
+
+.react-datepicker-wrapper {
+    width: 100%;
+}

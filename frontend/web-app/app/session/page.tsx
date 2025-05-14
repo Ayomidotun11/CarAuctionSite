@@ -1,10 +1,10 @@
 import React from 'react'
-import { getSession, getTokenWorkaround } from '../actions/authActions'
+import { getCurrentUser,  getTokenWorkaround } from '../actions/authActions'
 import Heading from '../components/Heading';
 import AuthTest from './AuthTest';
 
 export default async function Session() {
-    const session = await getSession();
+    const session = await getCurrentUser();
     const token = await getTokenWorkaround();
 
   return (

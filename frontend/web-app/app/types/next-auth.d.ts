@@ -4,11 +4,16 @@ import {DefaultSession} from 'next-auth';
 declare module 'next-auth' {
     interface Session {
         user: {
+            id: string
             username: string
         } & DefaultSession['user']
+        access_token?: string
     }
 
     interface Profile {
+        username: string
+    }
+    interface User {
         username: string
     }
 }
