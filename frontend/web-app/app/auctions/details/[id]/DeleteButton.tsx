@@ -1,7 +1,7 @@
 'use client';
 
 import { deleteAuction } from '@/app/actions/auctionActions';
-import { Button } from 'flowbite-react';
+import { Button, Spinner } from 'flowbite-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react'
 import { toast } from 'react-hot-toast';
@@ -26,8 +26,15 @@ export default function DeleteButton({id}: Props) {
     }
 
     return (
-        <Button color='failure' isProcessing={loading} onClick={doDelete}>
-            Delete Auction
-        </Button>
+        <Button color="failure" onClick={doDelete} disabled={loading}>
+        {loading ? (
+          <div className="flex items-center gap-2">
+            <Spinner size="sm" />
+            <span>Deleting...</span>
+          </div>
+        ) : (
+          'Delete Auction'
+        )}
+      </Button>
     )
 }

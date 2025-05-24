@@ -14,7 +14,7 @@ export default function Input(props: Props) {
     <div className='mb-3'>
     {props.showLabel && (
         <div className='mb-2 block'>
-            <Label htmlFor={field.name} value={props.label} />
+            <Label htmlFor={field.name}>{props.label}</Label>
         </div>
     )}
     <TextInput
@@ -23,8 +23,10 @@ export default function Input(props: Props) {
             type={props.type || 'text'}
             placeholder={props.label}
             color={fieldState.error ? 'failure' : !fieldState.isDirty ? '' : 'success'}
-            helperText={fieldState.error?.message} 
-        />
+            />
+            {fieldState.error?.message && (
+                <p className="text-sm text-red-600">{fieldState.error.message}</p>
+            )}
 </div>
   )
 }

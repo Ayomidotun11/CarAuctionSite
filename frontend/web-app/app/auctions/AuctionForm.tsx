@@ -8,6 +8,7 @@ import { Button } from 'flowbite-react'
 import DateInput from '../components/DateInput'
 import { createAuction, updateAuction } from '../actions/auctionActions'
 import toast from 'react-hot-toast'
+import { Spinner } from 'flowbite-react';
 
 
 
@@ -29,7 +30,7 @@ export default function AuctionForm({ auction }: Props) {
           reset({ make, model, color, mileage, year });
       }
       setFocus('make');
-  }, [setFocus])
+  }, [auction, reset, setFocus])
   
 
   async function onSubmit(data: FieldValues) {
@@ -49,6 +50,7 @@ export default function AuctionForm({ auction }: Props) {
             throw res.error;
         }
         router.push(`/auctions/details/${id}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         toast.error(error.status + ' ' + error.message)
     }
@@ -91,11 +93,22 @@ export default function AuctionForm({ auction }: Props) {
 
             <div className='flex justify-between'>
                 <Button outline color='gray'>Cancel</Button>
-                <Button
-                    isProcessing={isSubmitting}
-                    disabled={!isValid}
-                    type='submit'
-                    outline color='success'>Submit</Button>
+                
+<Button
+  type="submit"
+  disabled={isSubmitting || !isValid}
+  outline
+  color="success"
+>
+  {isSubmitting ? (
+    <div className="flex items-center gap-2">
+      <Spinner size="sm" />
+      <span>Submitting...</span>
+    </div>
+  ) : (
+    'Submit'
+  )}
+</Button>
             </div>
 
   </form>
