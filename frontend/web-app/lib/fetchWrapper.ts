@@ -2,7 +2,7 @@
 import { auth } from "@/auth";
 
 
-const baseUrl = 'http://localhost:6001/';
+const baseUrl = process.env.API_URL;
 
 async function get(url: string) {
     const requestOptions = {
@@ -69,12 +69,12 @@ async function handleResponse(response: Response) {
 
 
 
-async function getHeaders() {
-    // const token = await getTokenWorkaround();
+async function getHeaders(): Promise<Headers> {
     const session = await auth();
-    const headers = { 'Content-type': 'application/json' } as any;
-    if (session?.access_token) {
-        headers.Authorization = 'Bearer ' + session.access_token;
+    const headers = new Headers();
+    headers.set('Content-type', 'application/json');
+    if (session) {
+        headers.set('Authorization', 'Bearer ' + session.access_token)
     }
     return headers;
 }

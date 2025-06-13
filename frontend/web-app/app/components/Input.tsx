@@ -1,4 +1,4 @@
-import { Label, TextInput } from 'flowbite-react'
+import { HelperText, Label, TextInput } from 'flowbite-react'
 import React from 'react'
 import { UseControllerProps, useController } from 'react-hook-form'
 
@@ -24,9 +24,9 @@ export default function Input(props: Props) {
             placeholder={props.label}
             color={fieldState.error ? 'failure' : !fieldState.isDirty ? '' : 'success'}
             />
-            {fieldState.error?.message && (
-                <p className="text-sm text-red-600">{fieldState.error.message}</p>
-            )}
+            <HelperText color='failure'>
+            {fieldState.error?.message}
+            </HelperText>
 </div>
   )
 }

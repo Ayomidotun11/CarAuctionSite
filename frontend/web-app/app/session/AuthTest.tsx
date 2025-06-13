@@ -1,32 +1,30 @@
 'use client'
 import React, { useState } from 'react'
 import { updateAuctionTest } from '../actions/auctionActions';
-import { Button } from 'flowbite-react';
+import { Button, Spinner } from 'flowbite-react';
 
 export default function AuthTest() {
     const [loading, setLoading] = useState(false);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [result, setResult] = useState<any>();
+    const [result, setResult] = useState<{ status: number, message: string } | null>(null);
 
-    function doUpdate() {
-        setResult(undefined);
+    function handleUpdate() {
+        setResult(null);
         setLoading(true);
-        updateAuctionTest()
-            .then(res => setResult(res))
+        updateAuctionTest().then(res => setResult(res))
+            .catch(err => setResult(err))
             .finally(() => setLoading(false))
-
     }
 
-  return (
-    <div>
-            <div className='flex items-center gap-4'>
-            <Button outline isProcessing={loading} onClick={doUpdate}>
+    return (
+        <div className="flex items-center gap-4">
+            <Button outline onClick={handleUpdate}>
+                {loading && <Spinner size="sm" className="me-3" light />}
                 Test auth
             </Button>
             <div>
                 {JSON.stringify(result, null, 2)}
             </div>
         </div>
-    </div>
+
   )
 }

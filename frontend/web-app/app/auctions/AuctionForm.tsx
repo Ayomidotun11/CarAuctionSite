@@ -98,11 +98,11 @@ export default function AuctionForm({ auction }: Props) {
   type="submit"
   disabled={isSubmitting || !isValid}
   outline
-  color="success"
+  color="green"
 >
   {isSubmitting ? (
     <div className="flex items-center gap-2">
-      <Spinner size="sm" />
+      <Spinner size="sm" className='mr-3' />
       <span>Submitting...</span>
     </div>
   ) : (

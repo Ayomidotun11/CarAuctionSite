@@ -2,76 +2,83 @@
 
 import { useAuctionStore } from '@/hooks/useAuctionStore'
 import { useBidStore } from '@/hooks/useBidStore'
-import { User } from 'next-auth'
-import React, { ReactNode, useEffect, useState } from 'react'
+import React, { ReactNode, useCallback, useEffect, useRef} from 'react'
 import { Auction, AuctionFinished, Bid } from '../types'
 import AuctionCreatedToast from '../components/AuctionCreatedToast'
 import toast from 'react-hot-toast'
 import { getDetailedViewData } from '../actions/auctionActions'
 import AuctionFinishedToast from '../components/AuctionFinishedToast'
 import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr'
+import { useSession } from 'next-auth/react'
+import { useParams } from 'next/navigation'
 
 type Props = {
-    children: ReactNode
-    user: User | null
+    children: ReactNode,
+    
 }
-export default function SignalRProvider({ children, user }: Props) {
-    const [connection, setConnection] = useState<HubConnection | null>(null);
+export default function SignalRProvider({ children }: Props) {
+    const session = useSession();
+    const user = session.data?.user;
+
+    const connection = useRef<HubConnection | null>(null);
     const setCurrentPrice = useAuctionStore(state => state.setCurrentPrice);
     const addBid = useBidStore(state => state.addBid);
+    const params = useParams<{ id: string }>();
 
-    useEffect(() => {
-        const newConnection = new HubConnectionBuilder()
-            .withUrl('http://localhost:6001/notifications')
-            .withAutomaticReconnect()
-            .build();
+    const handleAuctionFinished = useCallback((finishedAuction: AuctionFinished) => {
+        const auction = getDetailedViewData(finishedAuction.auctionId);
+        return toast.promise(auction, {
+            loading: 'Loading',
+            success: (auction) => <AuctionFinishedToast 
+                finishedAuction={finishedAuction} 
+                auction={auction} />,
+            error: () => 'Auction finished'
+        }, {success: {duration: 10000, icon: null}})
+    }, [])
 
-        setConnection(newConnection);
-    }, []);
-
-    useEffect(() => {
-        if (connection) {
-            connection.start()
-                .then(() => {
-                    console.log('Connected to notification hub');
-
-                    connection.on('BidPlaced', (bid: Bid) => {
-                        if (bid.bidStatus.includes('Accepted')) {
-                            setCurrentPrice(bid.auctionId, bid.amount);
-                        }
-                        addBid(bid);
-                    });
-
-                    connection.on('AuctionCreated', (auction: Auction) => {
-                        if (user?.username !== auction.seller) {
-                            return toast(<AuctionCreatedToast auction={auction} />, 
-                                {duration: 10000})
-                        }
-                    });
-
-                    connection.on('AuctionFinished', (finishedAuction: AuctionFinished) => {
-                        const auction = getDetailedViewData(finishedAuction.auctionId);
-                        return toast.promise(auction, {
-                            loading: 'Loading',
-                            success: (auction) => 
-                                <AuctionFinishedToast 
-                                    finishedAuction={finishedAuction} 
-                                    auction={auction}
-                                />,
-                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                            error: (err) => 'Auction finished!'
-                        }, {success: {duration: 10000, icon: null}})
-                    })
-
-
-                }).catch(error => console.log(error));
+    const handleAuctionCreated = useCallback((auction: Auction) => {
+        if (user?.username !== auction.seller) {
+            return toast(<AuctionCreatedToast auction={auction} />, {
+                duration: 10000,
+            })
         }
+    }, [user])
+
+    const handleBidPlaced = useCallback((bid: Bid) => {
+        if (bid.bidStatus.includes('Accepted')) {
+            setCurrentPrice(bid.auctionId, bid.amount);
+        }
+
+        if (params.id === bid.auctionId) {
+            addBid(bid);
+        }
+    }, [setCurrentPrice, addBid, params.id]);
+
+    useEffect(() => {
+        if (!connection.current) {
+            connection.current = new HubConnectionBuilder()
+                .withUrl(process.env.NEXT_PUBLIC_NOTIFY_URL!)
+                .withAutomaticReconnect()
+                .build();
+
+            connection.current.start()
+                .then(() => console.log('Connected to notification hub'))
+                .catch(err => console.error('Error connecting to SignalR hub:', err));
+        }
+
+        connection.current.on('BidPlaced', handleBidPlaced);
+        connection.current.on('AuctionCreated', handleAuctionCreated);
+        connection.current.on('AuctionFinished', handleAuctionFinished);
 
         return () => {
-            connection?.stop();
-        }
-    }, [addBid, connection, setCurrentPrice, user?.username])
-  return (
-    children
-  )
+            connection.current?.off('BidPlaced', handleBidPlaced);
+            connection.current?.off('AuctionCreated', handleAuctionCreated);
+            connection.current?.off('AuctionFinished', handleAuctionFinished);
+        };
+
+    }, [handleBidPlaced, handleAuctionCreated, handleAuctionFinished]);
+
+    return (
+        <>{children}</>
+    );
 }
